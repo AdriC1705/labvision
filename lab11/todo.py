@@ -125,7 +125,6 @@ def formas(foto,ancho,alto):
                     centros=((sum(centro1)/float(len(centro1)),sum(centro2)/float(len(centro2))))#Formula para obtener los centros
                     centro.append(centros)
                     figura,x1,y1 = circulos(foto,actual,centros,cont,color)#figura es color, radio es del punto actual(x1,y1) al centro 
-                
                     coors.append(x1,y1)
                     for i in range(ancho):
                         for j in range(alto):
@@ -134,14 +133,11 @@ def formas(foto,ancho,alto):
                 except:
                     pass
     maximo=contador.index(max(contador))#Se obtiene el valor mas alto de la cadena contador
-    #print maximo
     gris=colores[maximo]#Se obtiene el color usado en el valor mas alto del contador
-    #print gris
     for i in range(ancho):#Recorrer imagen para repintar el area mas grande por gris
         for j in range(alto):
             if pixeles[i,j]==gris:
                        pixeles[i,j]=(81,81,81)
-    #rint centro
     draw=ImageDraw.Draw(foto)#Pintamos un circulo en cada uno de los centros que se almacenaron en la lista centro
     for i,recor in enumerate(centro):
         draw.ellipse((recor[0]-2,recor[1]-2,recor[0]+2,recor[1]+2),fill=(0,0,0))
@@ -217,41 +213,6 @@ def bfs(foto,actual,color,ancho,alto):
 
     return con,color,centro_i,centro_j,cordenadas,act
 
-def turn(p1,p2,p3):
-    izq=cmp(0,(p2[0]-p1[0])*(p3[1]-p1[1])-(p3[0]-p1[0])*(p2[1]-p1[1]))
-    if izq == -1: return 'LEFT'
-    elif izq == 0: return 'NONE'
-    elif izq == 1: return 'RIGHT'
-
-def jarvis_algorithm(cordenadas):
-    hull= [min(cordenadas)]#Obtenemos el punto mas a la izq de la lista
-    print hull
-    i=0
-    while(cordenadas):
-        puntofinal=cordenadas[0]#definimos el punto de inicio como final de recorrido
-        for j in range(len(cordenadas)-1):
-            if puntofinal==hull[i] or turn(cordenadas[j], hull[i], puntofinal)== 'LEFT':
-                puntofinal = cordenadas[j]
-        i+=1
-        hull.append(puntofinal)
-        if puntofinal==hull[0]:
-            break
-    return hull
-
-def convex_hull(foto,ancho,alto):
-    pixeles=foto.load()
-    puntos=[]
-    for i in range(ancho):
-        for j in range(alto):
-            if pixeles[i,j]==(255,255,255):
-                con,color,centro1,centro2,cordenadas=bfs(foto,(i,j),(0,0,255),ancho,alto)     
-                puntos.append(jarvis_algorithm(cordenadas))#Guardamos los puntos del contorno
-    for x in puntos: #Pintamos los puntos del contorno
-        for y in x:
-            pixeles[y]=(255,255,0)#de color amarillo
-            print "prueba"
-    return foto
-
 def umbral(foto,ancho,alto):#Funcion para generar la imagen umbral
     minimo=10#valores para usar en el umbral               
     maximo=200
@@ -309,28 +270,26 @@ def circulos(foto,actual,centro,cont,color):
 def comparar(foto,ancho,alto):
     pixeles = foto.load()
     figuraA=[]
-    figuraB =[]
-    fondo=[]
+    contador = []
+    colores = []
     for i in range(ancho):
         for j in range(alto):
-            try:
-                if pixeles[i,j] == (255,0,0):
-                    figuraA.append(pixeles[i,j])
-            except:
-                pass
-            try:
-                if pixeles[i,j] ==(81,81,81):
-                    fondo.append(pixeles[i,j])
-            except:
-                pass
-            try:
-                if pixeles[i,j] != (81,81,81) or pixeles[i,j] !=(255,0,0):
-                    figuraB.append(pixeles[i,j])
-            except:
-                pass
-    
-    
-                         
+                if pixeles[i,j] ==(255,255,255):
+                    col1=random.randint(0,255)
+                    col2=random.randint(0, 255)#Se genera un color random
+                    col3=random.randint(0,255)
+                    r,g,b=(col1,col2,col3)
+                    cont,color,centro1,centro2,cordenadas,actual=bfs(foto,(i,j),(r,g,b),ancho,alto)
+                    contador.append(cont)#Se agrega a la cadena contador el numero de pixeles sumados en el recorrido anterior
+                    colores.append(color)#Se agrega el color que se uso en el recorrido pasado
+    print contador
+    maximo=contador.index(max(contador))
+    gris = colores[maximo]
+    for j in range(alto):
+        if pixeles[i,j]==gris:
+            pixeles[i,j] = (81,81,81)
+    return foto
+
 def main():
     img= str(raw_input('Nombre de imagen: '))#Pedir imagen 
     foto=Image.open(img)#Abrir la imagen   
@@ -338,7 +297,6 @@ def main():
     escalada=escala(foto,ancho,alto)
     escalada.save('escalada.jpg')
     titulo="Escala de grises"
-   # ventana(escalada,ancho,alto,titulo)
     foto=Image.open(img)
     umbrales=umbral(foto,ancho,alto)
     umbrales.save('umbral.jpg')
@@ -360,6 +318,7 @@ def main():
     form=formas(binaria,ancho,alto)
     form.save('FormasyAreas.jpg')
     titulo="FormasyAreas"
-    compara = comparar(foto,ancho,alto)
+    compara = comparar(form,ancho,alto)
+    compara.save("detectaArea.jpg")
 main()
 
